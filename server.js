@@ -1,12 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const multer = require('multer');
-const upload = multer({ dest: 'public/' }); // Save images to public folder
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI);
 
 // Product Schema
 const productSchema = new mongoose.Schema({
@@ -241,11 +242,10 @@ app.get('/api/products', async (req, res) => {
     res.json(products);
 });
 
-// Add product with image upload
-app.post('/api/products', upload.single('img'), async (req, res) => {
+// Add product (no image upload)
+app.post('/api/products', async (req, res) => {
     if (req.body.adminPassword !== 'madamkanez') return res.status(403).json({ error: 'Forbidden' });
-    const { title, description, price, category } = req.body;
-    const img = req.file ? req.file.filename : req.body.img; // Use uploaded file or URL
+    const { title, description, price, img, category } = req.body;
     const product = new Product({ title, description, price, img, category });
     await product.save();
     res.json(product);
@@ -274,6 +274,5 @@ app.use(express.static('public'));
 // Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`API server running on port ${PORT}`);
-
+  console.log(`API server running on port ${PORT}`);
 });
